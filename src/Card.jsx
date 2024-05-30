@@ -58,7 +58,7 @@ const Card = ({ cardColor, fontColor, fontFamily, isValidLink, embedLink, topTra
                             <div className="flex items-center">
                               <div className="w-12 h-12 mr-4 overflow-hidden">
                                 <img className="w-full h-full object-cover rounded" src={artist.images[0].url} alt={artist.name} />
-                              </div>e 
+                              </div>
                               <p className="text-xs font-medium">{artist.name}</p>
                             </div>
                           </td>
