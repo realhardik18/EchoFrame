@@ -20,6 +20,7 @@ const Input = () => {
 
   const clientId = import.meta.env.clientId
   const redirectUri = 'https://echo-frame.vercel.app/';
+  console.log(clientId)
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
