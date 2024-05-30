@@ -166,9 +166,7 @@ const Input = () => {
 
   const handleExport = () => {
     if (cardRef.current) {
-      toPng(cardRef.current, {
-        width: 1080,
-        height: 1920,
+      toPng(cardRef.current, {                
         pixelRatio: 5,  // Adjust pixelRatio for higher quality
       })
         .then((dataUrl) => {
