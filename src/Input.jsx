@@ -18,9 +18,8 @@ const Input = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const cardRef = useRef();
 
-  const clientId = process.env.REACT_APP_clientId
+  const clientId = import.meta.env.VITE_clientId
   const redirectUri = 'https://echo-frame.vercel.app/';
-  console.log(clientId)
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -36,7 +35,7 @@ const Input = () => {
               code: authCode,
               redirect_uri: redirectUri,
               client_id: clientId,
-              client_secret: process.env.REACT_APP_clientSecret
+              client_secret: import.meta.env.VITE_clientSecret
             }),
             {
               headers: {
