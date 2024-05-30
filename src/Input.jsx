@@ -167,7 +167,7 @@ const Input = () => {
   const handleExport = () => {
     if (cardRef.current) {
       toPng(cardRef.current, {                
-        pixelRatio: 5,  // Adjust pixelRatio for higher quality
+        pixelRatio: 1,  // Adjust pixelRatio for higher quality
       })
         .then((dataUrl) => {
           const link = document.createElement('a');
