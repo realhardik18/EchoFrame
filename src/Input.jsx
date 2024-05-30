@@ -7,57 +7,115 @@ const Input = () => {
   const [spotifyLink, setSpotifyLink] = useState('');
   const [cardColor, setCardColor] = useState('#000000');
   const [fontColor, setFontColor] = useState('#ffffff');
-  const [selectedTheme, setSelectedTheme] = useState('dark');
   const [fontFamily, setFontFamily] = useState('Monospace');
   const [isValidLink, setIsValidLink] = useState(true);
   const [embedLink, setEmbedLink] = useState('');
   const [albumDetails, setAlbumDetails] = useState(null);
+  const [topTracks, setTopTracks] = useState([]);
+  const [topArtists, setTopArtists] = useState([]);
+  const [selectedOption, setSelectedOption] = useState('topTracks'); // Default option
+  const [username, setUsername] = useState('');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const cardRef = useRef();
 
-  const clientId = process.env.clientId
-  const clientSecret = process.env.clientSecret
-  console.log('hello there')
-  console.log(clientId)
-  console.log(clientSecret)
+  const clientId = import.meta.env.clientId
+  const redirectUri = 'https://echo-frame.vercel.app/';
 
   useEffect(() => {
-    const getAccessToken = async () => {
-      try {
-        const authResponse = await axios.post(
-          'https://accounts.spotify.com/api/token',
-          'grant_type=client_credentials',
-          {
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded',
-              Authorization: `Basic ${btoa(`${clientId}:${clientSecret}`)}`,
-            },
-          }
-        );
-        const accessToken = authResponse.data.access_token;
-        localStorage.setItem('spotifyAccessToken', accessToken);
-      } catch (error) {
-        console.error('Error fetching access token:', error);
-      }
-    };
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+  
+    if (code) {
+      const getAccessToken = async (authCode) => {
+        try {
+          const response = await axios.post(
+            'https://accounts.spotify.com/api/token',
+            new URLSearchParams({
+              grant_type: 'authorization_code',
+              code: authCode,
+              redirect_uri: redirectUri,
+              client_id: clientId,
+              client_secret: import.meta.env.clientSecret
+            }),
+            {
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+              },
+            }
+          );
+  
+          const { access_token } = response.data;
+          localStorage.setItem('spotifyAccessToken', access_token);
+  
+          // Fetch user's profile information
+          const profileResponse = await axios.get(
+            'https://api.spotify.com/v1/me',
+            {
+              headers: {
+                Authorization: `Bearer ${access_token}`,
+              },
+            }
+          );
+          setUsername(profileResponse.data.display_name || profileResponse.data.id);
+          setIsLoggedIn(true);
+  
+          // Fetch user's top tracks of the current month
+          const topTracksResponse = await axios.get(
+            'https://api.spotify.com/v1/me/top/tracks?limit=10&time_range=short_term',
+            {
+              headers: {
+                Authorization: `Bearer ${access_token}`,
+              },
+            }
+          );
+          setTopTracks(topTracksResponse.data.items);
+  
+          // Fetch user's top artists of the current month
+          const topArtistsResponse = await axios.get(
+            'https://api.spotify.com/v1/me/top/artists?limit=10&time_range=short_term',
+            {
+              headers: {
+                Authorization: `Bearer ${access_token}`,
+              },
+            }
+          );
+          setTopArtists(topArtistsResponse.data.items);
+  
+          // Remove the ?code= parameter from the URL
+          history.replaceState(null, '', window.location.pathname);
+  
+        } catch (error) {
+          console.error('Error fetching access token:', error);
+        }
+      };
+  
+      getAccessToken(code);
+    }
+  }, [clientId, redirectUri]);
+  
 
-    getAccessToken();
-  }, [clientId, clientSecret]);
+  const handleSpotifyLogin = () => {
+    const authEndpoint = 'https://accounts.spotify.com/authorize';
+    const scopes = ['user-top-read'];
+    const authUrl = `${authEndpoint}?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scopes.join(
+      '%20'
+    )}&response_type=code`;
+
+    window.location.href = authUrl;
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('spotifyAccessToken');
+    setIsLoggedIn(false);
+    setUsername('');
+    setTopTracks([]);
+    setTopArtists([]);
+  };
 
   const handleChange = (e) => {
     const link = e.target.value;
     setSpotifyLink(link);
     setIsValidLink(true);
-  };
-
-  const setThemeColors = (theme) => {
-    setSelectedTheme(theme);
-    if (theme === 'light') {
-      setCardColor('#f9f6ec');
-      setFontColor('#000000');
-    } else {
-      setCardColor('#000000');
-      setFontColor('#ffffff');
-    }
   };
 
   const generateEmbedLink = () => {
@@ -108,11 +166,15 @@ const Input = () => {
 
   const handleExport = () => {
     if (cardRef.current) {
-      toPng(cardRef.current, { pixelRatio: 5 })  // Adjust pixelRatio for higher quality
+      toPng(cardRef.current, {
+        width: 1080,
+        height: 1920,
+        pixelRatio: 5,  // Adjust pixelRatio for higher quality
+      })
         .then((dataUrl) => {
           const link = document.createElement('a');
           link.href = dataUrl;
-          link.download = 'card.png';
+          link.download = 'echoframe.png';
           link.click();
         })
         .catch((error) => {
@@ -126,53 +188,69 @@ const Input = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 w-full">
           <div className="col-span-1 md:col-span-3 p-4 bg-gray-800 rounded-lg shadow-lg text-white">
-            <div ref={cardRef}>
-              <Card
-                cardColor={cardColor}
-                fontColor={fontColor}
-                fontFamily={fontFamily}
-                isValidLink={isValidLink}
-                embedLink={embedLink}
-                albumDetails={albumDetails}
-              />
-            </div>
+            {isLoggedIn ? (
+              <div ref={cardRef}>
+                <Card
+                  cardColor={cardColor}
+                  fontColor={fontColor}
+                  fontFamily={fontFamily}
+                  isValidLink={isValidLink}
+                  embedLink={embedLink}
+                  albumDetails={albumDetails}
+                  topTracks={topTracks}
+                  topArtists={topArtists}
+                  selectedOption={selectedOption}
+                  setUsername={setUsername} // Pass setUsername to Card
+                />
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <p className="text-center text-xl">Log in with Spotify to generate an EchoFrame</p>
+              </div>
+            )}
           </div>
           <div className="col-span-1 md:col-span-1 p-4 bg-gray-800 rounded-lg shadow-lg">
-            <input
-              type="text"
-              value={spotifyLink}
-              onChange={handleChange}
-              placeholder="Enter Spotify album link"
-              className={`input input-bordered w-full mb-2 text-white ${isValidLink ? '' : 'text-red-500'}`}
-            />
-            <div className="flex items-center mb-2">
-              <select
-                className="select select-bordered bg-gray-700 text-white w-full mr-2"
-                onChange={(e) => setThemeColors(e.target.value)}
-                value={selectedTheme}
+            {isLoggedIn ? (
+              <>
+                <div className="text-white mb-4">
+                  <p>Hello {username}</p>
+                  <p className="text-gray-400">Help us keep EchoFrame awesome! Your donation will help keep EchoFrame free forever! Thanks for your support!</p>
+                </div>
+                <div className="relative">
+                  <select
+                    className="form-select daisyui-form-select w-full"
+                    value={selectedOption}
+                    onChange={(e) => setSelectedOption(e.target.value)}
+                  >
+                    <option value="topTracks">🎵Top Tracks</option>
+                    <option value="topArtists">🧑‍🎨Top Artists</option>
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
+                  </div>
+                </div>
+                <button
+                  onClick={handleExport}
+                  className="btn btn-secondary w-full mt-2"                  
+                >
+                  Share EchoFrame on Instagram
+                </button>
+                <a target="_blank" href="https://www.buymeacoffee.com/echoframe "> <button className="btn btn-danger w-full mt-2">☕Donate</button> </a>                                                                                                  
+                <button
+                  onClick={handleLogout}
+                  className="btn btn-danger w-full mt-2"
+                >
+                  Logout
+                </button>           
+                
+              </>
+            ) : (
+              <button
+                onClick={handleSpotifyLogin}
+                className="btn btn-primary w-full"
               >
-                <option value="dark">Dark Theme🌙</option>
-                <option value="light">Light Theme☀️</option>
-              </select>
-            </div>
-            <button
-              onClick={handleGenerateEmbed}
-              className="btn btn-primary w-full mb-2"
-            >
-              Generate EchoFrame
-            </button>
-            <button
-              onClick={handleExport}
-              className="btn btn-secondary w-full"
-              disabled={!embedLink && !albumDetails}
-            >
-              Export EchoFrame
-            </button>
-            {albumDetails && (
-              <div className="mt-4 p-4 bg-gray-700 rounded-lg text-white">
-                <h2 className="text-xl mb-2">So you like {albumDetails.artists[0].name}?</h2>
-                <p>We too like {albumDetails.artists[0].name}, Infact we like everything music related! Please donating </p>
-              </div>
+                Log in with Spotify
+              </button>
             )}
           </div>
         </div>

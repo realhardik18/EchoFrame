@@ -1,106 +1,85 @@
 import React from 'react';
-import QRCode from 'qrcode.react';
+import { format } from 'date-fns';
 
-const Card = ({ cardColor, fontColor, fontFamily, isValidLink, embedLink, albumDetails }) => {
-  const tracks = albumDetails ? albumDetails.tracks.items : [];
+const Card = ({ cardColor, fontColor, fontFamily, isValidLink, embedLink, topTracks, topArtists, selectedOption }) => {
+  const currentMonth = format(new Date(), 'MMMM');  
 
-  // Function to convert milliseconds to hours and minutes
-  const msToHMS = (ms) => {
-    const seconds = Math.floor((ms / 1000) % 60);
-    const minutes = Math.floor((ms / (1000 * 60)) % 60);
-    const hours = Math.floor((ms / (1000 * 60 * 60)) % 24);
-    return { hours, minutes, seconds };
-  };
-
-  // Calculate total duration of the album
-  const totalDuration = tracks.reduce((total, track) => total + track.duration_ms, 0);
-  const { hours, minutes } = msToHMS(totalDuration);
-
-  // Format total duration
-  let formattedDuration = '';
-  if (hours > 0) {
-    formattedDuration = `${hours} hour${hours === 1 ? '' : 's'} ${minutes} minute${minutes === 1 ? '' : 's'}`;
-  } else {
-    formattedDuration = `${minutes} minute${minutes === 1 ? '' : 's'}`;
-  }
-
-  // Generate QR code for Spotify playlist or album link
-  const qrCodeUrl = isValidLink ? embedLink : '';
-
-  // Helper function to remove features from track name
-  const removeFeatures = (name) => {
-    // Remove text within parentheses and trim surrounding whitespace
-    return name.replace(/\([^()]*\)/g, '').trim();
-  };
-
-  // Helper function to chunk the tracks into rows of 4
-  const chunkArray = (arr, size) => {
-    const chunkedArray = [];
-    for (let i = 0; i < arr.length; i += size) {
-      chunkedArray.push(arr.slice(i, i + size));
-    }
-    return chunkedArray;
-  };
-
-  const chunkedTracks = chunkArray(tracks, 4);
-
-  return (
-    <div
-      className="rounded-lg shadow-lg p-4 relative"
-      style={{ backgroundColor: cardColor, color: fontColor, fontFamily }}
-    >
-      {isValidLink ? (
-        albumDetails ? (
-          <div>
-            <div className="flex flex-col items-center md:flex-row md:items-start mb-4">
-              <img
-                src={albumDetails.images[0]?.url}
-                alt={albumDetails.name}
-                className="w-48 h-48 md:w-64 md:h-64 object-cover mb-4 md:mb-0 md:mr-4"
-              />
-              <div>
-                <h2 className="text-2xl md:text-4xl font-bold mb-2">{albumDetails.name}</h2>
-                <p className="text-base md:text-lg mb-2">{albumDetails.artists.map(artist => artist.name).join(', ')}</p>
-                <p className="text-base md:text-lg mb-2">{new Date(albumDetails.release_date).toLocaleString('default', { month: 'long', year: 'numeric' })}</p>
-                <p className="text-base md:text-lg">{albumDetails.genres.length > 0 ? `Genres: ${albumDetails.genres.join(', ')}` : ''}</p>
-                <p className="text-base md:text-lg">{formattedDuration}</p>
+  const renderTracksOrArtists = () => {
+    if (selectedOption === 'topTracks') {
+      return (
+        <>
+          {topTracks.length > 0 && (            
+            <div className="max-w-md mx-auto bg-black rounded-lg overflow-hidden shadow-lg mt-4">
+              <div className="px-4">
+                <h6 className="text-white text-lg font-bold mb-2">Top Tracks | {currentMonth}</h6>
+                <p className="text-sm text-green-300 mb-4">Made with https://echo-frame.vercel.app/</p>
+                <div className="overflow-x-auto">
+                  <table className="table-auto w-full text-white">
+                    <tbody>
+                      {topTracks.map((track, index) => (
+                        <tr key={track.id} className="border-b border-gray-600">
+                          <td className="px-2 py-2 text-center text-gray-400">{index + 1}</td>
+                          <td className="px-4 py-2">
+                            <div className="flex items-center">
+                              <div className="w-12 h-12 mr-4 overflow-hidden">
+                                <img className="w-full h-full object-cover rounded" src={track.album.images[0].url} alt={track.album.name} />
+                              </div>
+                              <div className="flex-1">
+                                <p className="text-base font-medium">{track.name}</p>
+                                <p className="text-sm text-gray-400">{track.artists.map(artist => artist.name).join(', ')}</p>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <tbody>
-                  {chunkedTracks.map((row, rowIndex) => (
-                    <tr key={rowIndex}>
-                      {row.map((track, colIndex) => (
-                        <td key={colIndex} className="px-2 md:px-4 py-1 md:py-2">
-                          <p className="text-base md:text-xs">{removeFeatures(track.name)}</p>
-                        </td>
+          )}
+        </>
+      );
+    } else if (selectedOption === 'topArtists') {
+      return (
+        <>
+          {topArtists.length > 0 && (
+            <div className="max-w-md mx-auto bg-black rounded-lg overflow-hidden shadow-lg mt-4">
+              <div className="px-4 py-2">
+              <h6 className="text-white text-lg font-bold mb-2">Top Artists | {currentMonth}</h6>
+                <p className="text-sm text-green-300 mb-4">Made with https://echo-frame.vercel.app/</p>                
+                <div className="overflow-x-auto">
+                  <table className="table-auto w-full text-white">
+                    <tbody>
+                      {topArtists.map((artist, index) => (
+                        <tr key={artist.id} className="border-b border-gray-600">
+                          <td className="px-2 py-2 text-center text-gray-400">{index + 1}</td>
+                          <td className="px-4 py-2">
+                            <div className="flex items-center">
+                              <div className="w-12 h-12 mr-4 overflow-hidden">
+                                <img className="w-full h-full object-cover rounded" src={artist.images[0].url} alt={artist.name} />
+                              </div>
+                              <p className="text-base font-medium">{artist.name}</p>
+                            </div>
+                          </td>
+                        </tr>
                       ))}
-                      {/* Fill empty cells if the row doesn't have enough tracks */}
-                      {row.length < 4 && (
-                        <React.Fragment>
-                          {[...Array(4 - row.length)].map((_, index) => (
-                            <td key={`empty-${index}`} className="px-2 md:px-4 py-1 md:py-2"></td>
-                          ))}
-                        </React.Fragment>
-                      )}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
-            {/* QR Code */}
-            <div className="absolute top-4 right-4">
-              <QRCode value={qrCodeUrl} size={128} />
-            </div>
-          </div>
-        ) : (
-          <p className="text-lg text-center">Enter a Spotify album link</p>
-        )
-      ) : (
-        <p className="text-lg text-red-500 text-center">Not a valid Spotify album link.</p>
-      )}
-    </div>
+          )}
+        </>
+      );
+    }
+    return null;
+  };
+
+  return (
+    <div className="max-w-md mx-auto bg-black text-white rounded-lg overflow-hidden shadow-lg" style={{ backgroundColor: cardColor, color: fontColor, fontFamily }}>      
+      {renderTracksOrArtists()}
+    </div>    
   );
 };
 
