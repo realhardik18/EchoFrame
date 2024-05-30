@@ -22,6 +22,7 @@ const Input = () => {
   const redirectUri = 'https://echo-frame.vercel.app/';
 
   useEffect(() => {
+    document.body.style.zoom = "80%";
     const params = new URLSearchParams(window.location.search);
     const code = params.get('code');
   
