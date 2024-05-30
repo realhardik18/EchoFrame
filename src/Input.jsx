@@ -22,7 +22,7 @@ const Input = () => {
   const redirectUri = 'https://echo-frame.vercel.app/';
 
   useEffect(() => {
-    document.body.style.zoom = "80%";
+    document.body.style.zoom = "90%";
     const params = new URLSearchParams(window.location.search);
     const code = params.get('code');
   
@@ -183,7 +183,7 @@ const Input = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-900">
+    <div className="flex flex-col min-h-screen bg-gray-800">
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 w-full">
           <div className="col-span-1 md:col-span-3 p-4 bg-gray-800 rounded-lg shadow-lg text-white">
