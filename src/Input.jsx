@@ -18,7 +18,7 @@ const Input = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const cardRef = useRef();
 
-  const clientId = import.meta.env.clientId
+  const clientId = import.meta.env.REACT_APP_clientId
   const redirectUri = 'https://echo-frame.vercel.app/';
   console.log(clientId)
 
@@ -36,7 +36,7 @@ const Input = () => {
               code: authCode,
               redirect_uri: redirectUri,
               client_id: clientId,
-              client_secret: import.meta.env.clientSecret
+              client_secret: import.meta.env.REACT_APP_clientSecret
             }),
             {
               headers: {
