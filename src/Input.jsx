@@ -16,6 +16,9 @@ const Input = () => {
 
   const clientId = process.env.clientId
   const clientSecret = process.env.clientSecret
+  console.log('hello there')
+  console.log(clientId)
+  console.log(clientSecret)
 
   useEffect(() => {
     const getAccessToken = async () => {
