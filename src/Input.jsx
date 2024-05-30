@@ -13,18 +13,18 @@ const Input = () => {
   const [albumDetails, setAlbumDetails] = useState(null);
   const [topTracks, setTopTracks] = useState([]);
   const [topArtists, setTopArtists] = useState([]);
-  const [selectedOption, setSelectedOption] = useState('topTracks'); // Default option
+  const [selectedOption, setSelectedOption] = useState('topTracks');
   const [username, setUsername] = useState('');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const cardRef = useRef();
 
-  const clientId = import.meta.env.VITE_clientId
-  const redirectUri = 'https://echo-frame.vercel.app/';
+  const clientId = import.meta.env.VITE_clientId;
+  const redirectUri = 'http://localhost:5173/';
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const code = params.get('code');
-  
+
     if (code) {
       const getAccessToken = async (authCode) => {
         try {
@@ -35,7 +35,7 @@ const Input = () => {
               code: authCode,
               redirect_uri: redirectUri,
               client_id: clientId,
-              client_secret: import.meta.env.VITE_clientSecret
+              client_secret: import.meta.env.VITE_clientSecret,
             }),
             {
               headers: {
@@ -43,11 +43,10 @@ const Input = () => {
               },
             }
           );
-  
+
           const { access_token } = response.data;
           localStorage.setItem('spotifyAccessToken', access_token);
-  
-          // Fetch user's profile information
+
           const profileResponse = await axios.get(
             'https://api.spotify.com/v1/me',
             {
@@ -58,8 +57,7 @@ const Input = () => {
           );
           setUsername(profileResponse.data.display_name || profileResponse.data.id);
           setIsLoggedIn(true);
-  
-          // Fetch user's top tracks of the current month
+
           const topTracksResponse = await axios.get(
             'https://api.spotify.com/v1/me/top/tracks?limit=10&time_range=short_term',
             {
@@ -69,8 +67,7 @@ const Input = () => {
             }
           );
           setTopTracks(topTracksResponse.data.items);
-  
-          // Fetch user's top artists of the current month
+
           const topArtistsResponse = await axios.get(
             'https://api.spotify.com/v1/me/top/artists?limit=10&time_range=short_term',
             {
@@ -80,19 +77,16 @@ const Input = () => {
             }
           );
           setTopArtists(topArtistsResponse.data.items);
-  
-          // Remove the ?code= parameter from the URL
+
           history.replaceState(null, '', window.location.pathname);
-  
         } catch (error) {
           console.error('Error fetching access token:', error);
         }
       };
-  
+
       getAccessToken(code);
     }
   }, [clientId, redirectUri]);
-  
 
   const handleSpotifyLogin = () => {
     const authEndpoint = 'https://accounts.spotify.com/authorize';
@@ -167,9 +161,7 @@ const Input = () => {
   const handleExport = () => {
     if (cardRef.current) {
       toPng(cardRef.current, {
-        width: 1080,
-        height: 1920,
-        pixelRatio: 5,  // Adjust pixelRatio for higher quality
+        quality: 1              
       })
         .then((dataUrl) => {
           const link = document.createElement('a');
@@ -189,7 +181,7 @@ const Input = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 w-full">
           <div className="col-span-1 md:col-span-3 p-4 bg-gray-800 rounded-lg shadow-lg text-white">
             {isLoggedIn ? (
-              <div ref={cardRef}>
+              <div ref={cardRef} className="p-4">
                 <Card
                   cardColor={cardColor}
                   fontColor={fontColor}
@@ -200,7 +192,7 @@ const Input = () => {
                   topTracks={topTracks}
                   topArtists={topArtists}
                   selectedOption={selectedOption}
-                  setUsername={setUsername} // Pass setUsername to Card
+                  setUsername={setUsername}
                 />
               </div>
             ) : (
@@ -214,7 +206,9 @@ const Input = () => {
               <>
                 <div className="text-white mb-4">
                   <p>Hello {username}</p>
-                  <p className="text-gray-400">Help us keep EchoFrame awesome! Your donation will help keep EchoFrame free forever! Thanks for your support!</p>
+                  <p className="text-gray-400">
+                    Help us keep EchoFrame awesome! Your donation will help keep EchoFrame free forever! Thanks for your support!
+                  </p>
                 </div>
                 <div className="relative">
                   <select
@@ -226,29 +220,34 @@ const Input = () => {
                     <option value="topArtists">🧑‍🎨Top Artists</option>
                   </select>
                   <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M9 5l7 7-7 7"
+                      ></path>
+                    </svg>
                   </div>
                 </div>
-                <button
-                  onClick={handleExport}
-                  className="btn btn-secondary w-full mt-2"                  
-                >
+                <button onClick={handleExport} className="btn btn-secondary w-full mt-2">
                   Share EchoFrame on Instagram
                 </button>
-                <a target="_blank" href="https://www.buymeacoffee.com/echoframe "> <button className="btn btn-danger w-full mt-2">☕Donate</button> </a>                                                                                                  
-                <button
-                  onClick={handleLogout}
-                  className="btn btn-danger w-full mt-2"
-                >
+                <a target="_blank" href="https://www.buymeacoffee.com/echoframe">
+                  <button className="btn btn-danger w-full mt-2">☕Donate</button>
+                </a>
+                <button onClick={handleLogout} className="btn btn-danger w-full mt-2">
                   Logout
-                </button>           
-                
+                </button>
               </>
             ) : (
-              <button
-                onClick={handleSpotifyLogin}
-                className="btn btn-primary w-full"
-              >
+              <button onClick={handleSpotifyLogin} className="btn btn-primary w-full">
                 Log in with Spotify
               </button>
             )}
