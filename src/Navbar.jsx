@@ -3,7 +3,7 @@ import './Navbar.css'; // Import the CSS file
 
 function App() {
     const [buttonText, setButtonText] = useState('Text 1');
-    const texts = ['message1', 'message2', 'message3'];
+    const texts = ['This', 'is a ', 'fucking', 'prototype'];
   
     useEffect(() => {
       let index = 0;
